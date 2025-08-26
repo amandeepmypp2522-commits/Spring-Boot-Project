@@ -4,10 +4,12 @@ import com.amandea.app.ws.service.UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -43,8 +45,14 @@ public class WebSecurity {
                 .userDetailsService(userDetailsService)
                 .passwordEncoder(bCryptPasswordEncoder);
 
-//        AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
+        AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
 //        http.authenticationManager(authenticationManager);
+
+        //Customize Login URL path
+        AuthenticationFilter authenticationFilter = new AuthenticationFilter(authenticationManager);
+        authenticationFilter.setFilterProcessesUrl("/users/login");
+
+//        AuthorizationFilter authorizationFilter = new AuthorizationFilter(authenticationManager);
 
         //Spring framework call this method at the time when our application starts up, our code will then be executed,
         // and the HTTP security object that we will configure in this method will be placed into application context and
@@ -61,7 +69,18 @@ public class WebSecurity {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_URL).permitAll() // note the leading slash
                         .anyRequest().authenticated()
-                );
+
+                )
+                .authenticationManager(authenticationManager)
+                .addFilter(authenticationFilter)
+                .addFilter(new AuthorizationFilter(authenticationManager))
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        //line 77  is to make this application stateless.this will mean that spring security will never create HTTp session
+        //and will never use it to obtain security context and this means that there is no HTTP session created for user authorization
+        //spring security will rely only on information that is inside of JWT.
+
+//                .addFilter(new AuthenticationFilter(authenticationManager));
+
 //                .httpBasic(Customizer.withDefaults()); // use Basic Auth for other endpoints
 
         return http.build();

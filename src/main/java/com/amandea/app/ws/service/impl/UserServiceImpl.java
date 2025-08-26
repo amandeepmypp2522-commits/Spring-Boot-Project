@@ -45,6 +45,17 @@ public class UserServiceImpl implements UserService {
         return returnValue;
     }
 
+    @Override
+    public UserDto getUser(String email) {
+        UserEntity userEntity = userRepository.findByEmail(email);
+        if(userEntity == null){
+            throw new UsernameNotFoundException(email);
+        }
+        UserDto returnValue = new UserDto();
+        BeanUtils.copyProperties(userEntity,returnValue);
+        return returnValue;
+    }
+
     //it will be invoked by spring framework to load user details do that it can verify username and password.
 
     @Override

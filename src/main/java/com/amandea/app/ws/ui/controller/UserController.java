@@ -9,6 +9,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+//  "/login" Api endpoint we don't need to make this Api endpoint Spring framework provides it.
+
 @RestController
 @RequestMapping("users")
 public class UserController {
