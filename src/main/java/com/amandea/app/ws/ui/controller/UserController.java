@@ -13,6 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 //  "/login" Api endpoint we don't need to make this Api endpoint Spring framework provides it.
 //By default, our web service endpoint will respond back with Json representation.
 
@@ -87,4 +90,20 @@ public class UserController {
         returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
         return returnValue;
     }
+
+    //below is the way to read query string from http url.
+    @GetMapping(produces = {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
+    public List<UserRest> getUsers(@RequestParam(value = "page",defaultValue = "0") int page,@RequestParam(value = "limit",defaultValue = "25") int limit){
+        List<UserRest> returnValue = new ArrayList<>();
+        List<UserDto> users= userService.getUsers(page,limit);
+
+        for(UserDto userDto :users){
+            UserRest userRest = new UserRest();
+            BeanUtils.copyProperties(userDto,userRest);
+            returnValue.add(userRest);
+        }
+
+        return returnValue;
+    }
+
 }

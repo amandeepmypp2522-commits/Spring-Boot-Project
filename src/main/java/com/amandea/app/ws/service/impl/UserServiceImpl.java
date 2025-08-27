@@ -7,8 +7,12 @@ import com.amandea.app.ws.service.UserService;
 import com.amandea.app.ws.shared.Utils;
 import com.amandea.app.ws.shared.dto.UserDto;
 import com.amandea.app.ws.ui.model.response.ErrorMessages;
+import com.amandea.app.ws.ui.model.response.UserRest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,6 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -91,6 +96,24 @@ public class UserServiceImpl implements UserService {
         }
         userRepository.delete(userEntity);
 //        userRepository.deleteByUserId(userId);
+    }
+
+    @Override
+    public List<UserDto> getUsers(int page, int limit) {
+        List<UserDto> returnValue = new ArrayList<>();
+        if(page>0)
+            page=page-1;
+
+        Pageable pageableRequest = PageRequest.of(page, limit);
+        Page<UserEntity> userPage = userRepository.findAll(pageableRequest);
+
+        List<UserEntity> users = userPage.getContent();
+        for(UserEntity userEntity : users){
+            UserDto userDto = new UserDto();
+            BeanUtils.copyProperties(userEntity,userDto);
+            returnValue.add(userDto);
+        }
+        return returnValue;
     }
 
     //it will be invoked by spring framework to load user details do that it can verify username and password.
