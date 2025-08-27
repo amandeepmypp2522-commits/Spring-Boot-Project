@@ -83,6 +83,16 @@ public class UserServiceImpl implements UserService {
         return returnValue;
     }
 
+    @Override
+    public void deleteUser(String userId) {
+        UserEntity userEntity = userRepository.findByUserId(userId);
+        if(userEntity == null){
+            throw new UserServiceException(ErrorMessages.COULD_NOT_DELETE_RECORD.getErrorMessage());
+        }
+        userRepository.delete(userEntity);
+//        userRepository.deleteByUserId(userId);
+    }
+
     //it will be invoked by spring framework to load user details do that it can verify username and password.
 
     @Override

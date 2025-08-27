@@ -5,8 +5,7 @@ import com.amandea.app.ws.exceptionHandling.UserServiceExceptionModel;
 import com.amandea.app.ws.service.UserService;
 import com.amandea.app.ws.shared.dto.UserDto;
 import com.amandea.app.ws.ui.model.request.UserDetailsRequestModel;
-import com.amandea.app.ws.ui.model.response.ErrorMessages;
-import com.amandea.app.ws.ui.model.response.UserRest;
+import com.amandea.app.ws.ui.model.response.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -77,8 +76,15 @@ public class UserController {
         return returnValue;
     }
 
-    @DeleteMapping
-    public String deleteUser(){
-        return "delete user was called";
+    @DeleteMapping(path = "/{id}",
+            produces = {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
+    public OperationStatusModel deleteUser(@PathVariable String id){
+        OperationStatusModel returnValue = new OperationStatusModel();
+
+        userService.deleteUser(id);
+
+        returnValue.setOperationName(RequestOperationName.DELETE.name());
+        returnValue.setOperationResult(RequestOperationStatus.SUCCESS.name());
+        return returnValue;
     }
 }
