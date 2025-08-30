@@ -1,11 +1,9 @@
 package com.amandea.app.ws.io.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Entity(name="users")
 public class UserEntity implements Serializable {
@@ -33,6 +31,12 @@ public class UserEntity implements Serializable {
 
     @Column(nullable = false)
    private Boolean EmailVerificationStatus = false;
+
+    //if we want addresses to be persisted when the user details is persisted , we need to provide one attribute "cascade"
+    //cascadeType = All means when persist operation takes place and the user details is persisted into the database, we will have a list of addresses persisted as well, and
+    //if we delete the user details from the database, the operation will also propagate and list of addresses will be deleted from the database for that user.
+    @OneToMany(mappedBy = "userDetails",cascade = CascadeType.ALL)
+    private List<AddressEntity> addresses;
 
 
     public long getId() {
@@ -97,5 +101,14 @@ public class UserEntity implements Serializable {
 
     public void setGetEmailVerificationStatus(Boolean getEmailVerificationStatus) {
         this.EmailVerificationStatus = getEmailVerificationStatus;
+    }
+
+
+    public List<AddressEntity> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<AddressEntity> addresses) {
+        this.addresses = addresses;
     }
 }
