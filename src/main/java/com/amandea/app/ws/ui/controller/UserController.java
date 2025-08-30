@@ -13,6 +13,10 @@ import org.modelmapper.TypeToken;
 import org.modelmapper.internal.bytebuddy.description.method.MethodDescription;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -123,7 +128,7 @@ public class UserController {
     }
 
     @GetMapping(path = "/{id}/addresses",produces = {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
-    public List<AddressesRest> getUserAddresses(@PathVariable String id){
+    public CollectionModel<AddressesRest> getUserAddresses(@PathVariable String id){
         List<AddressesRest> returnValue = new ArrayList<>();
 
         List<AddressDto> addressDto = addressesService.getAddresses(id);
@@ -134,19 +139,58 @@ public class UserController {
             }.getType();
             ModelMapper modelMapper = new ModelMapper();
             returnValue = modelMapper.map(addressDto, listType);
+
+            for (AddressesRest addressesRest : returnValue){
+                Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserController.class).getUserAddress(id,addressesRest.getAddressId()))
+                        .withSelfRel();
+                addressesRest.add(selfLink);
+            }
         }
+       //to add links to a collection, we will need to wrap the list of user addresses into collection model.
+        //.of method  accepts an object,which is our return value.
+        Link userLink = WebMvcLinkBuilder.linkTo(UserController.class)
+                .slash(id)
+                .withRel("user");
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserController.class).getUserAddresses(id))
+                .withSelfRel();
 
-
-        return returnValue;
+        return CollectionModel.of(returnValue,userLink,selfLink);
     }
-    @GetMapping(path = "/{userid}/addresses/{addressId}",produces = {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
-    public AddressesRest getUserAddress(@PathVariable String addressId){
+    @GetMapping(path = "/{userId}/addresses/{addressId}",produces = {MediaType.APPLICATION_XML_VALUE,MediaType.APPLICATION_JSON_VALUE})
+    public EntityModel<AddressesRest> getUserAddress(@PathVariable String userId, @PathVariable String addressId){
 
         AddressDto addressDto =  addressesService.getAddress(addressId);
 
         ModelMapper modelMapper = new ModelMapper();
+        AddressesRest returnValue = modelMapper.map(addressDto,AddressesRest.class);
+        //it will inspect our controller class, and it will create link :- http://localhost:8080/users
+        Link userLink = WebMvcLinkBuilder.linkTo(UserController.class)
+                .slash(userId)
+                .withRel("user");
+//        Link userAddressesLink = WebMvcLinkBuilder.linkTo(UserController.class)
+//                .slash(userId)
+//                        .slash("addresses")
+//                                .withRel("addresses");
+        Link userAddressesLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserController.class).getUserAddresses(userId))
+                .withRel("addresses");
+//        Link selfLink = WebMvcLinkBuilder.linkTo(UserController.class)
+//                .slash(userId)
+//                        .slash("addresses")
+//                                .slash(addressId)
+//                                        .withSelfRel();
 
-        return modelMapper.map(addressDto,AddressesRest.class);
+        Link selfLink = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(UserController.class).getUserAddress(userId,addressId))
+                .withSelfRel();
+//        returnValue.add(userLink);
+//        returnValue.add(userAddressesLink);
+//        returnValue.add(selfLink);
+
+        //another way to add links is to use Entity Model Type.
+        //so this entity model is a convenience type that we can use to wrap a single object that returning and it will allow us to add links to it as well.
+        // it is used only when we need to return a single object
+        EntityModel.of(returnValue, Arrays.asList(userLink,userAddressesLink,selfLink));
+
+        return EntityModel.of(returnValue, Arrays.asList(userLink,userAddressesLink,selfLink));
 
     }
 
